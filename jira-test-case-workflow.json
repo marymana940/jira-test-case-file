@@ -1,0 +1,320 @@
+{
+  "metadata": {
+    "workflow_name": "Jira User Stories to Test Cases in Google Sheets",
+    "workflow_id": "362954496",
+    "workflow_version": "1.0.0",
+    "description": "Automated Test Case Generation - Generates comprehensive test cases from Jira user stories using AI and writes them to Google Sheets",
+    "status": "published",
+    "created_by": "Mary Manasa",
+    "user_email": "tinwf26217@minitts.net",
+    "created_date": "2026-05-06T18:05:01.816307Z",
+    "last_modified": "2026-05-06T18:23:21Z",
+    "is_active": true,
+    "production_ready": true
+  },
+  "zdl": {
+    "app": "EngineAPI",
+    "type": "run",
+    "action": "series_skip_errors",
+    "id": "series_362954496",
+    "title": "Jira User Stories to Test Cases in Google Sheets",
+    "zdl_version": "0.4",
+    "steps": [
+      {
+        "id": "362954496",
+        "app": "JiraSoftwareCloudCLIAPI@2.34.1",
+        "type": "read",
+        "action": "issue",
+        "params": {},
+        "meta": {
+          "$editor": {
+            "has_automatic_issues": false
+          }
+        },
+        "authentication_id": 63786770,
+        "step_name": "New Issue (Jira Trigger)",
+        "step_number": 1,
+        "description": "Triggers when a new Jira issue is created and captures metadata"
+      },
+      {
+        "id": "362957229",
+        "app": "AICLIAPI@3.8.3",
+        "type": "write",
+        "action": "get_completion",
+        "params": {
+          "provider_id": "openai",
+          "authentication_id": "0",
+          "model_id": "openai/gpt-4o-mini",
+          "isOutputArray": true,
+          "instructions": "You are a QA engineer. Based on the following user story, generate comprehensive test cases covering POSITIVE, NEGATIVE, and EDGE CASE scenarios. Generate at least 3-5 test cases minimum covering: positive scenarios (happy path), negative scenarios (error handling, boundary violations), and edge cases (unusual inputs, limit testing). For each test case, provide: Test Case ID (TC-001, TC-002, etc.), Test Type (Positive/Negative/Edge Case), Title, Description, Steps (numbered), Expected Result.",
+          "inputFields": {
+            "user_story_summary": "{{362954496__summary}}",
+            "user_story_description": "{{362954496__description}}"
+          },
+          "outputSchema": {
+            "test_case_id": "Unique ID for the test case",
+            "test_case_title": "Brief title of the test case",
+            "test_case_description": "Detailed description of what is being tested",
+            "test_steps": "Step-by-step instructions to execute the test",
+            "expected_result": "Expected outcome of the test",
+            "test_type": "Type of test case: Positive, Negative, or Edge Case"
+          }
+        },
+        "meta": {
+          "$editor": {
+            "has_automatic_issues": false
+          },
+          "params": {
+            "provider_id": {
+              "label": "OpenAI"
+            },
+            "authentication_id": {
+              "label": "0"
+            },
+            "model_id": {
+              "label": "openai/gpt-4o-mini"
+            }
+          }
+        },
+        "step_name": "Generate test cases with AI by Zapier",
+        "step_number": 2,
+        "description": "Generates 3-5 comprehensive test cases using OpenAI GPT-4o-mini"
+      },
+      {
+        "id": "362958163",
+        "app": "ZapierLoopingCLIAPI@1.2.6",
+        "type": "write",
+        "action": "loop_values_line_items",
+        "params": {
+          "trim_whitespace": true,
+          "iteration_start": "1",
+          "iteration_limit": "500",
+          "loop_values": {
+            "test_case_id": "{{362957229__result[]test_case_id}}",
+            "test_case_title": "{{362957229__result[]test_case_title}}",
+            "test_case_description": "{{362957229__result[]test_case_description}}",
+            "test_steps": "{{362957229__result[]test_steps}}",
+            "expected_result": "{{362957229__result[]expected_result}}",
+            "test_type": "{{362957229__result[]test_type}}"
+          }
+        },
+        "meta": {
+          "$editor": {
+            "has_automatic_issues": false
+          },
+          "params": {}
+        },
+        "step_name": "Loop through each test case",
+        "step_number": 3,
+        "description": "Iterates through each test case from AI output array (5 iterations)"
+      },
+      {
+        "id": "362958248",
+        "app": "GoogleSheetsV2CLIAPI@2.13.0",
+        "type": "write",
+        "action": "add_row",
+        "params": {
+          "timezone": true,
+          "drive": "",
+          "spreadsheet": "1VNWNl0yQkzr-ncziQ88aA3UqqzSeNr_q3kJSBtgMiXs",
+          "worksheet": "0",
+          "COL$A": "{{test_case_id}}",
+          "COL$B": "{{test_case_title}}",
+          "COL$C": "{{test_case_description}}",
+          "COL$D": "{{test_steps}}",
+          "COL$E": "{{expected_result}}",
+          "COL$F": "{{test_type}}"
+        },
+        "meta": {
+          "$editor": {
+            "has_automatic_issues": true
+          },
+          "params": {
+            "spreadsheet": {
+              "label": "Test case generation result"
+            },
+            "worksheet": {
+              "label": "Sheet1"
+            },
+            "drive": {
+              "label": "My Google Drive"
+            }
+          }
+        },
+        "authentication_id": 63785658,
+        "step_name": "Create test case row in Google Sheets",
+        "step_number": 4,
+        "description": "Writes each test case as a new row in Google Sheets (runs inside loop)"
+      }
+    ]
+  },
+  "configuration": {
+    "authentication": [
+      {
+        "service": "Jira Software Cloud",
+        "app_id": "JiraSoftwareCloudCLIAPI@2.34.1",
+        "auth_type": "OAuth 2.0",
+        "auth_id": 63786770,
+        "status": "connected"
+      },
+      {
+        "service": "AI by Zapier",
+        "app_id": "AICLIAPI@3.8.3",
+        "auth_type": "API Key (OpenAI)",
+        "auth_id": 0,
+        "provider": "OpenAI",
+        "model": "gpt-4o-mini",
+        "status": "connected",
+        "note": "Built-in OpenAI access through Zapier"
+      },
+      {
+        "service": "Looping by Zapier",
+        "app_id": "ZapierLoopingCLIAPI@1.2.6",
+        "auth_type": "None (Built-in)",
+        "status": "active"
+      },
+      {
+        "service": "Google Sheets",
+        "app_id": "GoogleSheetsV2CLIAPI@2.13.0",
+        "auth_type": "OAuth 2.0",
+        "auth_id": 63785658,
+        "status": "connected"
+      }
+    ],
+    "google_sheets": {
+      "spreadsheet_id": "1VNWNl0yQkzr-ncziQ88aA3UqqzSeNr_q3kJSBtgMiXs",
+      "spreadsheet_name": "Test case generation result",
+      "worksheet_id": "0",
+      "worksheet_name": "Sheet1",
+      "drive_location": "My Google Drive"
+    },
+    "columns": [
+      {
+        "column_letter": "A",
+        "column_header": "Test case id",
+        "data_type": "text"
+      },
+      {
+        "column_letter": "B",
+        "column_header": "Summary",
+        "data_type": "text"
+      },
+      {
+        "column_letter": "C",
+        "column_header": "Description",
+        "data_type": "text"
+      },
+      {
+        "column_letter": "D",
+        "column_header": "Test steps",
+        "data_type": "text"
+      },
+      {
+        "column_letter": "E",
+        "column_header": "Expected Result",
+        "data_type": "text"
+      },
+      {
+        "column_letter": "F",
+        "column_header": "Test data",
+        "data_type": "text"
+      }
+    ]
+  },
+  "field_mappings": [
+    {
+      "source_step": "362954496",
+      "source_field": "summary",
+      "target_step": "362957229",
+      "target_field": "user_story_summary",
+      "mapping": "{{362954496__summary}}"
+    },
+    {
+      "source_step": "362954496",
+      "source_field": "description",
+      "target_step": "362957229",
+      "target_field": "user_story_description",
+      "mapping": "{{362954496__description}}"
+    },
+    {
+      "source_step": "362957229",
+      "source_field": "result[] (array)",
+      "target_step": "362958163",
+      "target_field": "loop_values",
+      "mapping": "Array of 5 test cases"
+    },
+    {
+      "source_step": "362958163",
+      "source_field": "test_case_id",
+      "target_step": "362958248",
+      "target_field": "COL$A",
+      "mapping": "{{test_case_id}}"
+    },
+    {
+      "source_step": "362958163",
+      "source_field": "test_case_title",
+      "target_step": "362958248",
+      "target_field": "COL$B",
+      "mapping": "{{test_case_title}}"
+    },
+    {
+      "source_step": "362958163",
+      "source_field": "test_case_description",
+      "target_step": "362958248",
+      "target_field": "COL$C",
+      "mapping": "{{test_case_description}}"
+    },
+    {
+      "source_step": "362958163",
+      "source_field": "test_steps",
+      "target_step": "362958248",
+      "target_field": "COL$D",
+      "mapping": "{{test_steps}}"
+    },
+    {
+      "source_step": "362958163",
+      "source_field": "expected_result",
+      "target_step": "362958248",
+      "target_field": "COL$E",
+      "mapping": "{{expected_result}}"
+    },
+    {
+      "source_step": "362958163",
+      "source_field": "test_type",
+      "target_step": "362958248",
+      "target_field": "COL$F",
+      "mapping": "{{test_type}}"
+    }
+  ],
+  "workflow_details": {
+    "total_steps": 4,
+    "total_apps": 3,
+    "utility_tools": 1,
+    "execution_model": "series_skip_errors",
+    "performance": {
+      "average_execution_time_seconds": 8,
+      "min_execution_time_seconds": 5,
+      "max_execution_time_seconds": 10,
+      "test_cases_per_run": 5,
+      "rows_written_per_run": 5,
+      "tasks_per_run": 7,
+      "api_calls_per_run": 7
+    },
+    "scalability": {
+      "concurrent_runs": "unlimited",
+      "max_iterations_per_loop": 500,
+      "google_sheets_row_limit": 10000000
+    }
+  },
+  "features": [
+    "Automatic test case generation",
+    "AI-powered intelligent scenarios",
+    "Positive, negative, edge case coverage",
+    "Scalable to unlimited issues",
+    "Organized Google Sheets output",
+    "Version control ready",
+    "Production ready"
+  ],
+  "issues": []
+}
+
